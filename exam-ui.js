@@ -41,6 +41,25 @@ function curriculumFilter(items, key){
   return within.length ? within : items;
 }
 
+/* ---------- chapter exercises: graduated items, picked by the user ----------
+ Each graduated item carries a tier 1-5 (untiered legacy items default to the
+ middle, tier 3). tierOf() ranks them; chapterExercises() groups a chapter's
+ pool into pickable units (one reading/listening text = one exercise, incl.
+ all its sub-questions; one knm/schrijven/spreken item = one exercise each),
+ sorted easiest first, for the chapter menu to list. */
+function tierOf(it){ return it.tier || (it.ctx && it.ctx.tier) || 3; }
+function chapterExercises(n, skill){
+  const pool = chapterItems(n).filter(it=>it.kind===skill);
+  if(skill==='lezen' || skill==='luisteren'){
+    const groups = {};
+    pool.forEach(it=>(groups[it.ctx.title] ||= []).push(it));
+    return Object.values(groups).sort((a,b)=>tierOf(a[0])-tierOf(b[0]))
+      .map(items=>({title:items[0].ctx.title, tier:tierOf(items[0]), items}));
+  }
+  return pool.sort((a,b)=>tierOf(a)-tierOf(b))
+    .map(it=>({title: it.t || it.title || it.sit || it.q, tier:tierOf(it), items:[it]}));
+}
+
 /* ---------- overview ---------- */
 function renderExam(){
   const st = examState();
@@ -126,9 +145,11 @@ function addTime(){ // count exam practice time toward the daily goal
 
 function renderItem(){
   if(ex.i >= ex.items.length) return finishExam();
-  const it = ex.items[ex.i]; ex.answered = false;
+  const it = ex.items[ex.i]; ex.answered = false; ex.usedHint = false;
   const kind = it.kind || ex.key, part = E.info.find(p=>p.key===kind);
-  exHead.textContent = `${part.icon} ${ex.ch?`NiG ${ex.ch} · ${part.name}`:ex.mock?'Mock exam':'Practice'} · ${ex.i+1}/${ex.items.length}`;
+  exHead.textContent = ex.stage==='exercise'
+    ? `${part.icon} NiG ${ex.ch} · ${part.name} · Exercise`
+    : `${part.icon} ${ex.ch?`NiG ${ex.ch} · ${part.name}${ex.stage==='test'?' · Chapter test':''}`:ex.mock?'Mock exam':'Practice'} · ${ex.i+1}/${ex.items.length}`;
   exNext.classList.add('hidden');
   if(kind==='lezen'){
     exBody.innerHTML = `<div class="panel" style="white-space:pre-wrap;font-family:Georgia,serif;line-height:1.5;margin-bottom:12px"><b>${esc(it.ctx.title)}</b>\n\n${esc(it.ctx.text)}</div>${mcHtml(it)}`;
@@ -155,13 +176,21 @@ function renderItem(){
 function mcHtml(it){
   return `<div class="panel"><b style="font-size:1.1rem">${esc(it.q)}</b>
     <div class="opts" style="grid-template-columns:1fr;margin-top:12px">${it.opts.map((o,i)=>`<button data-i="${i}"><kbd>${'ABC'[i]}</kbd> ${esc(o)}</button>`).join('')}</div>
+    ${it.hint?`<div class="actions" style="margin-top:8px"><button id="hintBtn" style="font-size:.8rem">💡 Hint</button></div><div id="hintBox" class="muted hidden" style="margin-top:6px;font-size:.85rem"></div>`:''}
     <div class="fb" id="exFb" style="margin-top:10px"></div></div>`;
 }
+function bindHint(it){
+  if(it.hint && window.hintBtn) hintBtn.onclick = ()=>{
+    ex.usedHint = true; hintBox.textContent = '💡 '+it.hint; hintBox.classList.remove('hidden'); hintBtn.disabled = true;
+  };
+}
 function bindMc(it){
+  bindHint(it);
   const btns = exBody.querySelectorAll('.opts button');
   btns.forEach((b,i)=>b.onclick=()=>{
     if(ex.answered) return; ex.answered = true;
     const good = i===it.a; if(good) ex.score++;
+    ex.lastGood = good;
     markItem(it, good); addTime(); ex.answers.push({it, pick:i, good}); save();
     if(ex.mock){ ex.i++; return renderItem(); }
     b.style.cssText = `background:${good?'var(--ok)':'var(--bad)'};color:#fff`;
@@ -188,8 +217,11 @@ function writeItem(it){
     ? it.fields.map((f,i)=>`<label style="display:block;margin-bottom:8px"><small class="muted">${esc(f)}</small><input data-f="${i}"></label>`).join('')
     : `<textarea id="wText" rows="9" placeholder="Schrijf hier…" style="font-family:Georgia,serif"></textarea><small class="muted" id="wCount">0 words</small>`;
   exBody.innerHTML = `<div class="panel" style="margin-bottom:12px"><div class="tag">✍️ ${esc(it.title)}</div><p style="white-space:pre-wrap">${esc(it.prompt)}</p>
-    <small class="muted">Exam tip: about 10 minutes per task. Handwrite it on paper too, because the real exam is on paper.</small></div>
+    <small class="muted">Exam tip: about 10 minutes per task. Handwrite it on paper too, because the real exam is on paper.</small>
+    ${it.hint?`<div class="actions" style="margin-top:8px"><button id="hintBtn" style="font-size:.8rem">💡 Hint</button></div><div id="hintBox" class="muted hidden" style="margin-top:6px;font-size:.85rem"></div>`:''}
+    </div>
     <div class="panel">${field}<div class="actions"><button class="primary" id="wCheck">Done → check my answer</button></div></div><div id="wResult"></div>`;
+  bindHint(it);
   if(window.wText) wText.oninput = ()=> wCount.textContent = (wText.value.trim().split(/\s+/).filter(Boolean).length)+' words';
   wCheck.onclick = ()=>{
     addTime();
@@ -201,7 +233,7 @@ function writeItem(it){
     wCheck.disabled = true;
     wSave.onclick = ()=>{
       const boxes = [...document.querySelectorAll('.wc')], n = boxes.filter(b=>b.checked).length;
-      ex.score += n/boxes.length; markItem(it, n/boxes.length>=.65); save(); ex.i++; renderItem();
+      ex.score += n/boxes.length; ex.lastGood = n/boxes.length>=.65; markItem(it, ex.lastGood); save(); advance();
     };
     wResult.scrollIntoView({behavior:'smooth'});
   };
@@ -214,10 +246,12 @@ function speakItem(it){
     <div class="tag">🗣️ Situation</div><p style="font-size:1.1rem">${esc(it.sit)}</p>
     <p><b style="font-size:1.2rem">${esc(it.q)}</b></p>
     <button onclick="speak(${esc(JSON.stringify(it.sit+' '+it.q))})">🔊 Hear the question</button>
+    ${it.hint?`<div style="margin-top:8px"><button id="hintBtn" style="font-size:.8rem">💡 Hint</button></div><div id="hintBox" class="muted hidden" style="margin-top:6px;font-size:.85rem"></div>`:''}
     <div style="margin:18px 0"><button class="primary" id="recBtn" style="padding:16px 26px;font-size:1.1rem">🎙 Record answer (${it.time}s)</button></div>
     <div id="recInfo" class="muted"></div><audio id="recAudio" controls class="hidden" style="width:100%;margin-top:10px"></audio>
     <textarea id="spText" rows="2" class="hidden" placeholder="No microphone? Type what you would say…"></textarea>
     <div id="spModel" class="hidden" style="text-align:left;margin-top:14px"></div></div>`;
+  bindHint(it);
   speak(it.q);
   recBtn.onclick = ()=> rec && rec.state==='recording' ? rec.stop() : startRec(it);
 }
@@ -244,7 +278,9 @@ function showModel(it){
     <p class="muted" style="font-size:.85rem">Did you answer the question, in full sentences, with a reason (want/omdat)?</p>
     <div class="actions"><button onclick="rateSpeak(0)" style="color:var(--bad)">Not yet</button><button onclick="rateSpeak(.5)">Almost</button><button class="primary" onclick="rateSpeak(1)">Good 👍</button></div>`;
 }
-function rateSpeak(v){ const it = ex.items[ex.i]; ex.score += v; markItem(it, v>=.5); save(); ex.i++; renderItem(); }
+function rateSpeak(v){ const it = ex.items[ex.i]; ex.score += v; ex.lastGood = v>=.5; markItem(it, ex.lastGood); save(); advance(); }
+
+function advance(){ ex.i++; renderItem(); }
 
 /* ---- finish ---- */
 function finishExam(){
@@ -252,19 +288,26 @@ function finishExam(){
   if(window.speechSynthesis) speechSynthesis.cancel();
   addTime();
   const total = ex.items.length, score = Math.round(ex.score*10)/10, pct = Math.round(100*score/Math.max(1,total));
-  const rec = {t:Date.now(), score, total, mock:ex.mock, ms:Date.now()-ex.start};
-  if(ex.ch){ const c = examState().chapters ||= {}; (c[ex.ch] ||= []).unshift(rec); c[ex.ch] = c[ex.ch].slice(0,20); }
-  else { const r = examState().results; (r[ex.key] ||= []).unshift(rec); }
-  save();
+  if(ex.stage!=='exercise'){
+    const rec = {t:Date.now(), score, total, mock:ex.mock, ms:Date.now()-ex.start};
+    if(ex.ch){ const c = examState().chapters ||= {}; (c[ex.ch] ||= []).unshift(rec); c[ex.ch] = c[ex.ch].slice(0,20); }
+    else { const r = examState().results; (r[ex.key] ||= []).unshift(rec); }
+    save();
+  }
   const wrong = ex.answers.filter(a=>!a.good);
   exHead.textContent = 'Result'; exNext.classList.add('hidden'); examFill.style.width='100%';
+  const chForMenu = ex.ch;
   exBody.innerHTML = `<div class="card" style="min-height:0"><div style="font-size:3rem">${pct>=70?'🎉':'💪'}</div>
     <div class="word">${score} / ${total}</div><div class="${pct>=70?'ok':'bad'}">${pct}%: ${pct>=70?'that would be a pass level!':'pass level is about 70%. Keep practising.'}</div></div>
     ${wrong.length?`<h2>Review your mistakes</h2>${wrong.map(a=>`<div class="panel" style="margin-bottom:8px"><b>${esc(a.it.q)}</b><br>
       <span class="bad">✗ ${esc(a.it.opts[a.pick])}</span><br><span class="ok">✓ ${esc(a.it.opts[a.it.a])}</span>${a.it.ex?`<br><small class="muted">${esc(a.it.ex)}</small>`:''}
       ${a.it.ctx&&a.it.ctx.lines?`<details><summary class="muted">Transcript</summary>${a.it.ctx.lines.map(([s,t])=>`<div><b>${s}:</b> ${esc(t)}</div>`).join('')}</details>`:''}</div>`).join('')}`:''}
-    ${ex.ch?wordsToReviewHtml(ex.ch):''}
-    <div class="actions">${ex.ch?`<button onclick="ex=null;show('course')">Back to course</button><button class="primary" onclick="startChapter(${ex.ch})">Again →</button>`:`<button onclick="ex=null;show('exam')">Back to exam overview</button><button class="primary" onclick="startExam('${ex.key}',${ex.mock})">Again →</button>`}</div>`;
+    ${ex.stage!=='exercise' && ex.ch?wordsToReviewHtml(ex.ch):''}
+    <div class="actions">${
+      ex.stage==='exercise' ? `<button class="primary" onclick="ex=null;renderChapterMenu(${chForMenu})">← More exercises</button>`
+      : ex.ch?`<button onclick="ex=null;show('course')">Back to course</button><button class="primary" onclick="startChapterTest(${ex.ch})">Again →</button>`
+      :`<button onclick="ex=null;show('exam')">Back to exam overview</button><button class="primary" onclick="startExam('${ex.key}',${ex.mock})">Again →</button>`
+    }</div>`;
 }
 function wordsToReviewHtml(n){
   const c = chapters().find(c=>c.n===n);
@@ -274,7 +317,14 @@ function wordsToReviewHtml(n){
   return `<h2>Words to review</h2><div class="panel">${words.map(w=>`<div class="wrow"><span><b>${esc(w.nl)}</b> <span class="muted">${esc(w.en)}</span></span>${w.bad?`<span class="pill">✗ ${w.bad} · ✓ ${w.ok}</span>`:''}</div>`).join('')}
     <div class="actions"><button class="primary" onclick='startSession({topic:${esc(JSON.stringify(c.topic))}})'>📚 Practise these words</button></div></div>`;
 }
-function quitExam(){ const back = ex && ex.ch ? 'course' : 'exam'; if(ex && ex.i>0 && confirm('Stop and save your score so far?')){ ex.items = ex.items.slice(0, ex.i); finishExam(); } else { clearInterval(timerIv); ex=null; window.speechSynthesis&&speechSynthesis.cancel(); show(back); } }
+function quitExam(){
+  if(ex && ex.stage==='exercise'){
+    clearInterval(timerIv); const ch = ex.ch; ex=null; window.speechSynthesis&&speechSynthesis.cancel(); renderChapterMenu(ch); return;
+  }
+  const back = ex && ex.ch ? 'course' : 'exam';
+  if(ex && ex.i>0 && confirm('Stop and save your score so far?')){ ex.items = ex.items.slice(0, ex.i); finishExam(); }
+  else { clearInterval(timerIv); ex=null; window.speechSynthesis&&speechSynthesis.cancel(); show(back); }
+}
 
 /* readiness on home screen */
 function examReadiness(){
@@ -310,12 +360,59 @@ function renderCourse(){
     <div class="btns"><button onclick='startSession({topic:${esc(JSON.stringify(c.topic))}})' title="Learn the words">📚 Words</button><button onclick="startChapter(${c.n})" title="Practise exam tasks">📝 Practise</button>${s.wrong?`<button onclick="startChapterReview(${c.n})" title="Practise only what you got wrong">🔁 Review mistakes</button>`:''}</div>
     <div class="bars"><span>Words</span><div class="bar"><i style="width:${wp}%;background:${wp>=80?'var(--ok)':'var(--acc)'}"></i></div><span>Exam</span><div class="bar"><i style="width:${ep}%;background:${ep>=70?'var(--ok)':'var(--acc2)'}"></i></div></div></div>`; }).join('');
 }
-/* one mixed practice run: lezen → luisteren → knm → schrijven → spreken of one chapter */
-function startChapter(n){
+/* chapter practice: show a menu of exercises per skill, easiest first, so you
+ pick what to do; a "Chapter test" option runs the short capstone quiz. */
+function startChapter(n){ renderChapterMenu(n); }
+function renderChapterMenu(n){
+  const c = chapters().find(c=>c.n===n);
+  if(!c) return;
   const order = ['lezen','luisteren','knm','schrijven','spreken'];
-  const items = chapterItems(n).sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
+  const names = {lezen:'📖 Lezen',luisteren:'🎧 Luisteren',knm:'🏛️ KNM',schrijven:'✍️ Schrijven',spreken:'🗣️ Spreken'};
+  const tierLabel = t => ({1:'Easy',2:'Medium',3:'Hard',4:'Exam level',5:'Exam level'})[t] || 'Medium';
+  const st = examState().items;
+  chapterMenuTitle.textContent = `Chapter ${n} · ${c.name}`;
+  chapterMenuBody.innerHTML = order.map(skill=>{
+    const exs = chapterExercises(n, skill);
+    if(!exs.length) return '';
+    const nextIdx = exs.findIndex(e=>!e.items.every(it=>st[it.id] && st[it.id].ok>=st[it.id].bad && st[it.id].ok));
+    return `<div class="panel" style="margin-bottom:10px"><b>${names[skill]}</b>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">${exs.map((e,i)=>{
+        const done = e.items.every(it=>st[it.id] && st[it.id].ok>=st[it.id].bad && st[it.id].ok);
+        return `<button style="text-align:left" onclick="startExercise(${n},'${skill}',${i})">${done?'✓ ':''}Exercise ${i+1} <span class="muted">· ${esc(tierLabel(e.tier))}</span>${i===nextIdx?' <span class=\"pill\">suggested</span>':''}</button>`;
+      }).join('')}</div></div>`;
+  }).join('') + `<div class="actions"><button class="primary" style="width:100%" onclick="startChapterTest(${n})">📝 Take the chapter test</button></div>`;
+  show('chapterMenu');
+}
+function startExercise(n, skill, idx){
+  const exs = chapterExercises(n, skill), e = exs[idx];
+  if(!e) return;
+  ex = {key:'chapter', ch:n, mock:false, stage:'exercise', items:e.items.slice(), i:0, score:0, start:Date.now(), plays:{}, answers:[], limit:0};
+  show('examrun'); clearInterval(timerIv); timerIv = setInterval(tick, 500); tick(); renderItem();
+}
+/* chapter test: one mixed quiz, lezen → luisteren → knm → schrijven → spreken */
+function startChapterTest(n){
+  // a short capstone quiz, not every graduated exercise: one text's worth of
+  // lezen/luisteren (whichever text you're weakest on), plus one knm, one
+  // schrijven, up to two spreken - same scale the chapter test always had.
+  const order = ['lezen','luisteren','knm','schrijven','spreken'];
+  let items = [];
+  order.forEach(k=>{
+    const pool = chapterItems(n).filter(it=>it.kind===k);
+    if(!pool.length) return;
+    if(k==='lezen' || k==='luisteren'){
+      const groups = {}; pool.forEach(i=>(groups[i.ctx.title] ||= []).push(i));
+      const st = examState().items, gs = arr => arr.reduce((s,i)=>{ const x=st[i.id]; return s + (!x?1:(x.bad+1)/(x.ok+x.bad+2)); },0)/arr.length;
+      const g = shuffle(Object.values(groups)).sort((a,b)=>gs(b)-gs(a));
+      items.push(...g[0]);
+    } else if(k==='spreken'){
+      items.push(...prioritise(pool).slice(0,2));
+    } else {
+      items.push(...prioritise(pool).slice(0,1));
+    }
+  });
+  items.sort((a,b)=>order.indexOf(a.kind)-order.indexOf(b.kind));
   if(!items.length) return toast('No exam tasks for this chapter yet');
-  ex = {key:'chapter', ch:n, mock:false, items, i:0, score:0, start:Date.now(), plays:{}, answers:[], limit:0};
+  ex = {key:'chapter', ch:n, mock:false, stage:'test', items, i:0, score:0, start:Date.now(), plays:{}, answers:[], limit:0};
   show('examrun'); clearInterval(timerIv); timerIv = setInterval(tick, 500); tick(); renderItem();
 }
 

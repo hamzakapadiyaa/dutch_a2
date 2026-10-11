@@ -151,7 +151,14 @@ summary h2{display:inline}
   </div>
   <div class="muted" id="exHead" style="margin-bottom:10px"></div>
   <div id="exBody"></div>
-  <div class="actions"><button class="primary big-btn hidden" id="exNext" onclick="ex.i++;renderItem()">Next →</button></div>
+  <div class="actions"><button class="primary big-btn hidden" id="exNext" onclick="advance()">Next →</button></div>
+</section>
+
+<!-- CHAPTER MENU: pick an exercise -->
+<section id="chapterMenu" class="hidden">
+  <button onclick="show('course')" style="margin-bottom:10px">← Back to course</button>
+  <h1 id="chapterMenuTitle"></h1>
+  <div id="chapterMenuBody"></div>
 </section>
 
 <!-- WORDS -->
@@ -485,9 +492,9 @@ function resetAll(){ if(confirm('Delete ALL progress and history?')){ localStora
 
 /* ============ UTIL / NAV ============ */
 function show(v){
-  ['home','study','summary','words','settings','exam','examrun','course'].forEach(x=>document.getElementById(x).classList.toggle('hidden', x!==v));
+  ['home','study','summary','words','settings','exam','examrun','course','chapterMenu'].forEach(x=>document.getElementById(x).classList.toggle('hidden', x!==v));
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v || (v==='study'&&b.dataset.v==='study-start')));
-  document.querySelector('nav').classList.toggle('hidden', v==='study'||v==='examrun');
+  document.querySelector('nav').classList.toggle('hidden', v==='study'||v==='examrun'||v==='chapterMenu');
   if(v==='home') renderHome(); if(v==='words') renderWords(); if(v==='settings') renderSettings(); if(v==='exam') renderExam(); if(v==='course') renderCourse();
   window.scrollTo(0,0);
 }
