@@ -22,15 +22,36 @@ function prioritise(list){
   return shuffle(list).sort((a,b)=>score(b)-score(a));
 }
 
+/* ---------- curriculum: start easy, ramp up to full exam difficulty ----------
+ Course items (tagged with a NiG chapter 1-16) scaffold a topic; standalone items
+ (no chapter) are genuine exam-level, so they rank hardest. Practice mode only
+ unlocks items up to a ceiling that rises with your best recent score; mock exams
+ are never filtered, since those should always be the real, full-difficulty thing. */
+const chOf = it => { if(it.ch) return +String(it.ch).replace(/\D/g,''); const m = /^NiG (\d+)/.exec(it.title || (it.ctx&&it.ctx.title) || ''); return m ? +m[1] : 0; };
+const MAX_DIFF = 17; // chapters 1-16, +1 tier for standalone exam-level items
+function difficultyOf(it){ const c = chOf(it); return c>0 ? c : MAX_DIFF; }
+function levelFor(key){
+  const r = examState().results[key]||[];
+  return r.length ? r.slice(0,5).reduce((m,x)=>Math.max(m, x.score/x.total), 0) : 0;
+}
+function difficultyCeiling(key){ return Math.min(MAX_DIFF, 3 + Math.round(levelFor(key)*(MAX_DIFF-1))); }
+function curriculumFilter(items, key){
+  const ceiling = difficultyCeiling(key);
+  const within = items.filter(it=>difficultyOf(it)<=ceiling);
+  return within.length ? within : items;
+}
+
 /* ---------- overview ---------- */
 function renderExam(){
   const st = examState();
   examParts.innerHTML = E.info.map(p=>{
     const r = st.results[p.key]||[], last = r[0], best = r.reduce((m,x)=>Math.max(m, x.score/x.total), 0);
     const ready = Math.round(100*best);
+    const ceiling = difficultyCeiling(p.key);
     return `<div class="panel" style="margin-bottom:10px">
       <div class="flex" style="justify-content:space-between"><b style="font-size:1.1rem">${p.icon} ${p.name}</b><span class="pill">${p.time} min</span></div>
       <p class="muted" style="margin:8px 0">${p.fmt}</p>
+      <div class="muted" style="font-size:.8rem;margin-bottom:8px">📈 Practice ramps up: ${ceiling>=MAX_DIFF?'full exam level unlocked':`up to chapter ${ceiling} level`}</div>
       ${r.length?`<div class="flex" style="justify-content:space-between;font-size:.85rem"><span>Best ${ready}% · last ${Math.round(100*last.score/last.total)}% · ${r.length} attempts</span><span class="${ready>=70?'ok':'muted'}">${ready>=70?'✓ on track':'goal ≥ 70%'}</span></div>
         <div class="bar" style="margin:6px 0 10px"><i style="width:${ready}%;background:${ready>=70?'var(--ok)':'var(--acc)'}"></i></div>`:''}
       <div class="flex"><button class="primary" style="flex:1" onclick="startExam('${p.key}',false)">Practise</button>
@@ -64,6 +85,7 @@ function renderPlan(){
 /* ---------- runner ---------- */
 function startExam(key, mock){
   let items = itemsFor(key);
+  if(!mock) items = curriculumFilter(items, key); // practice ramps up; mock stays full exam difficulty
   if(key==='lezen' || key==='luisteren'){
     // keep questions of one text together; pick texts by priority
     const groups = {}; items.forEach(i=>(groups[i.ctx.title] ||= []).push(i));
@@ -262,7 +284,6 @@ function examReadiness(){
 
 /* ============ COURSE: Nederlands in gang, per chapter ============ */
 const KINDS = ['lezen','luisteren','schrijven','spreken','knm'];
-const chOf = it => { if(it.ch) return +String(it.ch).replace(/\D/g,''); const m = /^NiG (\d+)/.exec(it.title || (it.ctx&&it.ctx.title) || ''); return m ? +m[1] : 0; };
 function chapterItems(n){ return KINDS.flatMap(k=>itemsFor(k).filter(it=>chOf(it)===n)); }
 function chapters(){
   return Object.keys(window.WORDS).map(t=>/^NiG (\d+)\.\d+ (.*)$/.exec(t)).filter(Boolean)
