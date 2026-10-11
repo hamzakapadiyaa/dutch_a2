@@ -50,6 +50,13 @@ Everything below is scored against that, not against "nice to have."
 - [ ] No placement/diagnostic test for a user who already knows some Dutch — everyone starts at chapter 1 regardless of actual level.
 - [ ] No way to self-report "I already know this topic" to skip ahead without grinding through it.
 
+## 10. Source content expansion — Nederlands in gang (4e druk)
+- [ ] User has access to the book's own materials via nt2school.nl (https://www.nt2school.nl/nl/lesmateriaal/nederlands-in-gang-4e-druk-) — the app's existing "NiG" chapters/topics in `words.js` and `exam.js` are already modeled after this book, so this is the natural source to pull more/better content from rather than inventing new exercises from scratch.
+- [ ] Pull additional chapter vocabulary lists to fill out topics that are currently thin, and cross-check existing word lists against the book for gaps or mistranslations.
+- [ ] Pull additional lezen/luisteren texts, knm questions, schrijven prompts, and spreken situations per chapter so each chapter has more than one exercise per skill (currently several chapters are light on exam.js items per skill/tier).
+- [ ] Preserve the existing tiering scheme (tier 1-5, `chOf`/`tierOf` in exam-ui.js) when adding new items, so new content slots into the graduated-difficulty system instead of needing its own logic.
+- [ ] Check licensing/terms of nt2school.nl material before including it verbatim — may need to paraphrase/adapt rather than copy if redistribution isn't permitted.
+
 ---
 
 ### Suggested starting point
