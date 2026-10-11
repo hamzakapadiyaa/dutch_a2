@@ -184,6 +184,8 @@ summary h2{display:inline}
     <textarea id="imp" rows="7" placeholder="de straat = street&#10;oversteken = to cross"></textarea>
     <div class="actions"><button class="primary" onclick="importWords()">Add words</button></div>
   </div>
+  <h2>Sync across devices</h2>
+  <div class="panel" id="syncPanel"></div>
   <h2>Backup</h2>
   <div class="panel flex">
     <button onclick="exportData()">⬇ Export progress</button>
@@ -526,6 +528,7 @@ function toast(m){ const t=document.createElement('div'); t.className='toast'; t
 window.speechSynthesis && speechSynthesis.addEventListener?.('voiceschanged', ()=>voice=null);
 load(); save();
 </script>
+<script src="sync.js"></script>
 <script src="exam-ui.js"></script>
 <script>show('home');
 </script>
