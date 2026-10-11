@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dutch A2 Trainer</title>
+<style>
+:root{--bg:#f5f4f0;--card:#fff;--ink:#1c1c1f;--mute:#6d6d75;--acc:#e8620c;--acc2:#21468b;--ok:#2e8b57;--bad:#c0392b;--line:#e3e1db;--soft:#f0eee8}
+@media (prefers-color-scheme:dark){:root{--bg:#121214;--card:#1d1d21;--ink:#f1f1f3;--mute:#9b9ba4;--line:#303037;--soft:#26262b;--acc2:#8fb1ef}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink)}
+main{max-width:720px;margin:0 auto;padding:16px 16px 90px}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:5}
+nav button{flex:1;max-width:180px;border:0;background:none;padding:10px 4px 12px;font-size:.8rem;color:var(--mute)}
+nav button b{display:block;font-size:1.3rem}
+nav button.on{color:var(--acc)}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 14px;border-radius:12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+.primary{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+.big-btn{width:100%;padding:16px;font-size:1.1rem}
+h1{font-size:1.4rem;margin:6px 0 14px}
+h2{font-size:1rem;margin:22px 0 10px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat b{display:block;font-size:1.6rem}
+.stat small{color:var(--mute)}
+.bar{height:8px;background:var(--soft);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc)}
+.chart{display:flex;align-items:flex-end;gap:3px;height:90px}
+.chart div{flex:1;background:var(--acc);border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
+.chart div.zero{background:var(--line)}
+.topic{display:grid;grid-template-columns:1fr 90px auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.topic:last-child{border:0}
+.topic button{padding:6px 10px;font-size:.85rem}
+.muted{color:var(--mute)}
+.hidden{display:none!important}
+/* study */
+.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.top .bar{flex:1}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 20px;min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+.tag{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--acc2);font-weight:700}
+.word{font-size:2.1rem;font-weight:800}
+.trans{font-size:1.3rem}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+@media(max-width:520px){.opts{grid-template-columns:1fr}}
+.opts button{padding:14px;text-align:left}
+.opts button kbd{color:var(--mute);margin-right:6px}
+input,textarea,select{font:inherit;width:100%;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+input.okb{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--card))}
+input.badb{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--card))}
+.fb{min-height:1.4em}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+.actions{display:flex;gap:8px;margin-top:12px}
+.actions button{flex:1}
+.dots{display:inline-flex;gap:3px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.f{background:var(--acc)}
+.wrow{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);align-items:center}
+.pill{font-size:.75rem;padding:2px 8px;border-radius:20px;background:var(--soft);color:var(--mute)}
+.speak{border-radius:50%;width:44px;height:44px;padding:0;font-size:1.2rem}
+.flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chap{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.chap:last-child{border:0}
+.chap .bars{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 8px;align-items:center;font-size:.75rem;color:var(--mute)}
+.chap .btns{display:flex;gap:6px}
+.chap .btns button{padding:6px 10px;font-size:.85rem}
+.nownext{border-color:var(--acc)}
+summary h2{display:inline}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:9;font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+
+<!-- HOME -->
+<section id="home">
+  <h1>Goedendag! 👋 <span class="muted" style="font-weight:400;font-size:1rem" id="greet"></span></h1>
+  <div class="panel">
+    <div class="flex" style="justify-content:space-between"><b>Today's goal</b><span id="goalTxt" class="muted"></span></div>
+    <div class="bar" style="margin:10px 0 14px"><i id="goalBar"></i></div>
+    <button class="primary big-btn" onclick="startSession()">▶ Start learning</button>
+    <div class="flex" style="margin-top:8px">
+      <button style="flex:1" onclick="startSession({weak:true})">🎯 Weak words</button>
+      <button style="flex:1" onclick="startSession({review:true})">🔁 Review only</button>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:12px">
+    <div class="stat"><b id="stStreak">0</b><small>🔥 day streak</small></div>
+    <div class="stat"><b id="stLearned">0</b><small>words learned</small></div>
+    <div class="stat"><b id="stDue">0</b><small>due for review</small></div>
+    <div class="stat"><b id="stAcc">–</b><small>accuracy (7 days)</small></div>
+  </div>
+
+  <h2>Exam readiness</h2>
+  <div class="panel" id="readiness"></div>
+
+  <h2>Activity · last 30 days (minutes)</h2>
+  <div class="panel"><div class="chart" id="chart"></div><div class="flex muted" style="justify-content:space-between;font-size:.75rem;margin-top:6px"><span>30 days ago</span><span id="totalTime"></span><span>today</span></div></div>
+
+  <h2>Topics</h2>
+  <div class="panel" id="topics"></div>
+
+  <h2>Words you struggle with</h2>
+  <div class="panel" id="weak"></div>
+
+  <h2>Recent sessions</h2>
+  <div class="panel" id="sessions"></div>
+</section>
+
+<!-- STUDY -->
+<section id="study" class="hidden">
+  <div class="top">
+    <button onclick="endSession()" title="End">✕</button>
+    <div class="bar"><i id="sessBar"></i></div>
+    <span id="sessInfo" class="muted" style="font-variant-numeric:tabular-nums"></span>
+  </div>
+  <div class="card" id="card"></div>
+  <div class="actions" id="actions"></div>
+</section>
+
+<!-- SUMMARY -->
+<section id="summary" class="hidden"></section>
+
+<!-- COURSE -->
+<section id="course" class="hidden">
+  <h1>📘 Nederlands in gang</h1>
+  <p class="muted" style="margin-top:-6px">Follow the course chapter by chapter: learn the words, then practise exam-style tasks on the same theme.</p>
+  <div id="courseNext"></div>
+  <div class="panel" id="courseList"></div>
+</section>
+
+<!-- EXAM -->
+<section id="exam" class="hidden">
+  <h1>📝 A2 Inburgeringsexamen</h1>
+  <p class="muted" style="margin-top:-6px">Five separate exams. Practise each one. Your weakest questions come back first.</p>
+  <div id="examParts"></div>
+  <h2>6-week study plan</h2>
+  <div class="panel" id="examPlan"></div>
+  <h2>Exam tips</h2>
+  <div class="panel"><ul id="examTips" style="margin:0;padding-left:18px"></ul></div>
+</section>
+
+<section id="examrun" class="hidden">
+  <div class="top">
+    <button onclick="quitExam()" title="Stop">✕</button>
+    <div class="bar"><i id="examFill"></i></div>
+    <span id="exTimer" class="muted" style="font-variant-numeric:tabular-nums;font-weight:700"></span>
+  </div>
+  <div class="muted" id="exHead" style="margin-bottom:10px"></div>
+  <div id="exBody"></div>
+  <div class="actions"><button class="primary big-btn hidden" id="exNext" onclick="ex.i++;renderItem()">Next →</button></div>
+</section>
+
+<!-- WORDS -->
+<section id="words" class="hidden">
+  <h1>📚 Words</h1>
+  <div class="flex"><input id="search" placeholder="Search Dutch or English…" style="flex:2;min-width:180px"><select id="topicF" style="flex:1;min-width:140px"></select></div>
+  <p class="muted" id="wcount"></p>
+  <div class="panel" id="wlist"></div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings" class="hidden">
+  <h1>⚙️ Settings</h1>
+  <div class="panel">
+    <label>Daily goal (minutes)<input type="number" id="setGoal" min="5" max="180"></label><br><br>
+    <label>New words per session<input type="number" id="setNew" min="0" max="40"></label><br><br>
+    <label><input type="checkbox" id="setAudio" style="width:auto"> Speak Dutch words aloud</label>
+  </div>
+  <h2>Add your own words</h2>
+  <div class="panel">
+    <p class="muted" style="margin-top:0">One per line, <code>dutch = english</code>. Paste the list from your nt2school chapter here. The words go into the topic name you type below.</p>
+    <input id="impTopic" placeholder="Topic name, e.g. 4.3 Op straat"><br><br>
+    <textarea id="imp" rows="7" placeholder="de straat = street&#10;oversteken = to cross"></textarea>
+    <div class="actions"><button class="primary" onclick="importWords()">Add words</button></div>
+  </div>
+  <h2>Backup</h2>
+  <div class="panel flex">
+    <button onclick="exportData()">⬇ Export progress</button>
+    <label class="flex" style="cursor:pointer"><span class="pill">⬆ Import backup</span><input type="file" id="backup" accept=".json" style="display:none"></label>
+    <button onclick="resetAll()" style="color:var(--bad)">Reset everything</button>
+  </div>
+</section>
+
+</main>
+
+<nav>
+  <button data-v="home" class="on"><b>🏠</b>Home</button>
+  <button data-v="study-start"><b>▶</b>Learn</button>
+  <button data-v="course"><b>📘</b>Course</button>
+  <button data-v="exam"><b>📝</b>Exam</button>
+  <button data-v="words"><b>📚</b>Words</button>
+  <button data-v="settings"><b>⚙️</b>Settings</button>
+</nav>
+
+<script src="words.js"></script>
+<script src="exam.js"></script>
+<script>
+/* ============ STORAGE ============ */
+const KEY = 'nl-a2-v2', MIN = 60e3, DAY = 864e5;
+const today = (t=Date.now()) => { const d=new Date(t); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+let S;
+function load(){
+  try{ S = JSON.parse(localStorage.getItem(KEY)); }catch(e){}
+  if(!S) S = {words:{}, days:{}, sessions:[], settings:{goal:30, newPer:10, audio:true}};
+  // merge built-in list (adds any new words without touching progress)
+  for(const [topic, txt] of Object.entries(window.WORDS||{})) parse(txt).forEach(w=>addWord(w, topic));
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function parse(txt){
+  return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const m = l.split(/\s*(?:=|\t|;|\s-\s)\s*/);
+    return m.length>=2 && m[0] ? {nl:m[0].trim(), en:m.slice(1).join(' / ').trim()} : null;
+  }).filter(Boolean);
+}
+function addWord(w, topic){
+  const id = (topic+'|'+w.nl).toLowerCase();
+  if(S.words[id]) return false;
+  S.words[id] = {id, nl:w.nl, en:w.en, topic, stage:0, ease:2.5, ivl:0, due:0, seen:0, ok:0, bad:0, last:0};
+  return true;
+}
+const W = () => Object.values(S.words);
+
+/* ============ LEARNING ENGINE ============
+ stage 0 new → 1 recognise (MC nl→en) → 2 recall-choice (MC en→nl)
+ → 3 type the Dutch → 4 listen & type → 5 mastered
+ Right answer: move up a stage, longer gap before next review.
+ Wrong answer: drop 2 stages, ease goes down, the card returns in this session. */
+function schedule(w, good){
+  w.seen++; w.last = Date.now();
+  if(good){
+    w.ok++;
+    w.stage = Math.min(5, w.stage+1);
+    if(w.stage <= 2) w.ivl = 0;                       // still learning: keep in session
+    else w.ivl = w.ivl ? Math.round(w.ivl*w.ease*10)/10 : (w.stage===3 ? 1 : 2);
+    w.ease = Math.min(3, w.ease+0.05);
+  } else {
+    w.bad++;
+    w.stage = Math.max(1, w.stage-2);
+    w.ease = Math.max(1.3, w.ease-0.2);
+    w.ivl = 0;
+  }
+  w.due = Date.now() + (w.ivl ? w.ivl*DAY : 10*MIN);
+}
+const isDue = w => w.stage>0 && w.due <= Date.now();
+const weakness = w => w.seen ? (w.bad+1)/(w.ok+w.bad+2) + (5-w.stage)*0.05 : 0;
+
+/* ============ SESSION ============ */
+let sess = null, cur = null, answered = false, shownAt = 0;
+function startSession(opt={}){
+  const all = W().filter(w=>!opt.topic || w.topic===opt.topic);
+  let review = all.filter(isDue).sort((a,b)=>weakness(b)-weakness(a));
+  let fresh = [];
+  if(opt.weak){
+    review = all.filter(w=>w.seen && w.bad).sort((a,b)=>weakness(b)-weakness(a)).slice(0,15);
+  } else if(!opt.review){
+    fresh = all.filter(w=>w.stage===0);
+    if(!opt.topic){ // continue the topic you've started most, so new words come in themes
+      const started = {}; W().filter(w=>w.stage>0).forEach(w=>started[w.topic]=(started[w.topic]||0)+1);
+      const base = Object.keys(window.WORDS);
+      const rank = t => started[t] ? -started[t] : base.indexOf(t);   // most-started topic first, then file order
+      fresh.sort((a,b)=>rank(a.topic)-rank(b.topic));
+    }
+    fresh = fresh.slice(0, S.settings.newPer);
+  }
+  review = review.slice(0, 25);
+  if(!review.length && !fresh.length){
+    if(opt.review||opt.weak) return toast('Nothing to review right now 🎉 Try “Start learning”.');
+    // everything done: practise the least-recently seen words
+    review = all.slice().sort((a,b)=>a.last-b.last).slice(0,15);
+  }
+  // interleave new words between reviews
+  const q = []; let i=0, j=0;
+  while(i<review.length || j<fresh.length){
+    if(i<review.length) q.push(review[i++]);
+    if(i<review.length) q.push(review[i++]);
+    if(j<fresh.length) q.push(fresh[j++]);
+  }
+  sess = {q, start:Date.now(), n:0, ok:0, newSeen:0, wrong:new Set(), total:q.length, opt};
+  show('study'); next();
+}
+function next(){
+  if(!sess.q.length) return finish();
+  cur = sess.q.shift(); answered = false; shownAt = Date.now();
+  const done = sess.total - sess.q.length - 1;
+  sessBar.style.width = Math.round(100*done/Math.max(1,sess.total))+'%';
+  sessInfo.textContent = `${sess.ok}/${sess.n} ✓ · ${fmtMin(Date.now()-sess.start)}`;
+  // choose exercise by how well you know it
+  const st = cur.stage, others = W().filter(w=>w!==cur && w.topic===cur.topic);
+  if(st===0) introCard();
+  else if(st===1) mcCard('nl', others);
+  else if(st===2) mcCard('en', others);
+  else if(st===3) typeCard(false);
+  else typeCard(Math.random()<.5); // stage 4-5: mix listening and typing
+}
+function requeue(w, gap){ sess.q.splice(Math.min(gap, sess.q.length), 0, w); sess.total++; }
+
+function record(good, ms){
+  ms = Math.min(ms, MIN);  // ignore long pauses
+  const d = S.days[today()] ||= {n:0, ok:0, ms:0, learned:0};
+  d.n++; if(good) d.ok++; d.ms += ms;
+  sess.n++; if(good) sess.ok++; else sess.wrong.add(cur.id);
+  const before = cur.stage;
+  schedule(cur, good);
+  if(before<3 && cur.stage>=3) d.learned++;
+  // adaptive: wrong → show again in 3 cards; still learning → again a bit later
+  if(!good) requeue(cur, 3);
+  else if(cur.stage<=2) requeue(cur, 4 + Math.floor(Math.random()*3));
+  save();
+}
+
+/* ---- exercise cards ---- */
+function introCard(){
+  card.innerHTML = `<span class="tag">✨ New word · ${esc(cur.topic)}</span>
+    <div class="word">${esc(cur.nl)}</div><div class="trans muted">${esc(cur.en)}</div>
+    <button class="speak" onclick="speak(cur.nl)">🔊</button>`;
+  actions.innerHTML = `<button class="primary big-btn" onclick="introDone()">Got it → (Enter)</button>`;
+  speak(cur.nl);
+}
+function introDone(){
+  if(answered) return; answered = true;
+  sess.newSeen++;
+  const d = S.days[today()] ||= {n:0, ok:0, ms:0, learned:0};
+  d.ms += Math.min(Date.now()-shownAt, MIN);
+  cur.stage = 1; cur.last = Date.now(); cur.due = Date.now();
+  requeue(cur, 3); save(); next();
+}
+function mcCard(from, pool){
+  const ans = from==='nl' ? 'en' : 'nl';
+  if(pool.length<3) pool = W().filter(w=>w!==cur);
+  const opts = shuffle([cur, ...shuffle(pool.filter(o=>o[ans]!==cur[ans])).slice(0,3)]);
+  card.innerHTML = `<span class="tag">${from==='nl'?'What does this mean?':'How do you say this in Dutch?'}</span>
+    <div class="word">${esc(cur[from])}</div>
+    ${from==='nl'?'<button class="speak" onclick="speak(cur.nl)">🔊</button>':''}
+    <div class="opts">${opts.map((o,i)=>`<button data-i="${i}"><kbd>${i+1}</kbd>${esc(o[ans])}</button>`).join('')}</div>
+    <div class="fb" id="fb"></div>`;
+  actions.innerHTML = '';
+  const btns = card.querySelectorAll('.opts button');
+  btns.forEach((b,i)=>b.onclick=()=>{
+    if(answered) return; answered = true;
+    const good = opts[i]===cur;
+    record(good, Date.now()-shownAt);
+    b.style.cssText = `background:${good?'var(--ok)':'var(--bad)'};color:#fff`;
+    if(!good) btns[opts.indexOf(cur)].style.cssText = 'border:2px solid var(--ok)';
+    fb.innerHTML = good ? `<span class="ok">${praise()}</span>` : `<span class="bad">Not quite. It will come back soon.</span>`;
+    speak(cur.nl);
+    if(good){ const c=cur; setTimeout(()=>{ if(cur===c && answered) next(); }, 900); }
+    else actions.innerHTML = `<button class="primary big-btn" onclick="next()">Continue (Enter)</button>`;
+  });
+  card._opts = btns;
+  if(from==='nl') speak(cur.nl);
+}
+function typeCard(listen){
+  card.innerHTML = listen
+    ? `<span class="tag">🎧 Listen and type what you hear</span><button class="speak" style="width:80px;height:80px;font-size:2rem" onclick="speak(cur.nl)">🔊</button><div class="muted">${esc(cur.en)}</div>`
+    : `<span class="tag">⌨️ Type in Dutch</span><div class="word">${esc(cur.en)}</div>`;
+  card.innerHTML += `<input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Dutch…"><div class="fb" id="fb"></div>`;
+  actions.innerHTML = `<button onclick="checkType(true)">I don't know</button><button class="primary" onclick="checkType()">Check (Enter)</button>`;
+  if(listen) speak(cur.nl);
+  setTimeout(()=>ans.focus(), 50);
+}
+function checkType(giveUp){
+  if(answered) return;
+  const raw = ans.value.trim(); if(!raw && !giveUp) return;
+  answered = true;
+  const res = giveUp ? 'wrong' : compare(raw, cur.nl);
+  const good = res!=='wrong';
+  record(good, Date.now()-shownAt);
+  ans.className = good ? 'okb' : 'badb'; ans.disabled = true;
+  fb.innerHTML = res==='exact' ? `<span class="ok">${praise()}</span>`
+    : res==='article' ? `<span class="ok">Correct!</span> Mind the article: <b>${esc(cur.nl)}</b>`
+    : res==='typo' ? `<span class="ok">Almost, there's a small typo:</span> <b>${esc(cur.nl)}</b>`
+    : `<span class="bad">Answer:</span> <b>${esc(cur.nl)}</b>`;
+  speak(cur.nl);
+  actions.innerHTML = `<button class="primary big-btn" onclick="next()">Continue (Enter)</button>`;
+}
+function compare(a, b){
+  const n = s => s.toLowerCase().replace(/[.,!?¿'’"]/g,'').replace(/\s+/g,' ').trim();
+  const strip = s => s.replace(/^(de|het|een)\s+/,'');
+  a = n(a); b = n(b);
+  const alts = b.split(/\s*\/\s*/);
+  if(alts.includes(a)) return 'exact';
+  if(alts.some(x=>strip(x)===strip(a))) return 'article';
+  if(alts.some(x=>strip(x).length>4 && lev(strip(x), strip(a))<=1)) return 'typo';
+  return 'wrong';
+}
+function lev(a,b){ const d=[...Array(b.length+1).keys()]; for(let i=1;i<=a.length;i++){ let p=d[0]; d[0]=i; for(let j=1;j<=b.length;j++){ const t=d[j]; d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]!==b[j-1])); p=t; } } return d[b.length]; }
+
+function finish(){
+  const ms = Date.now()-sess.start;
+  S.sessions.unshift({start:sess.start, ms, n:sess.n, ok:sess.ok, newW:sess.newSeen});
+  S.sessions = S.sessions.slice(0,50); save();
+  const wrong = [...sess.wrong].map(id=>S.words[id]);
+  summary.innerHTML = `<div class="card" style="min-height:0">
+    <div style="font-size:3rem">🎉</div><div class="word">Goed gedaan!</div>
+    <div class="grid" style="width:100%">
+      <div class="stat"><b>${sess.n}</b><small>answers</small></div>
+      <div class="stat"><b>${sess.n?Math.round(100*sess.ok/sess.n):0}%</b><small>correct</small></div>
+      <div class="stat"><b>${sess.newSeen}</b><small>new words</small></div>
+      <div class="stat"><b>${fmtMin(ms)}</b><small>time</small></div>
+    </div>
+    ${wrong.length?`<div style="width:100%;text-align:left"><h2>Practise these again</h2>${wrong.map(w=>`<div class="wrow"><b>${esc(w.nl)}</b><span class="muted">${esc(w.en)}</span></div>`).join('')}</div>`:''}
+  </div>
+  <div class="actions"><button onclick="show('home')">Home</button><button class="primary" onclick="startSession(sess.opt)">Keep going →</button></div>`;
+  show('summary');
+}
+function endSession(){ if(sess && sess.n) finish(); else show('home'); }
+
+/* ============ DASHBOARD ============ */
+function renderHome(){
+  const d = S.days[today()] || {ms:0};
+  const goalMs = S.settings.goal*MIN;
+  goalTxt.textContent = `${fmtMin(d.ms)} / ${S.settings.goal} min`;
+  goalBar.style.width = Math.min(100, 100*d.ms/goalMs)+'%';
+  greet.textContent = d.ms>=goalMs ? '· goal reached ✅' : '';
+  // streak
+  let streak=0, t=Date.now();
+  if(!S.days[today()]) t -= DAY;
+  while(S.days[today(t)] && S.days[today(t)].n){ streak++; t-=DAY; }
+  stStreak.textContent = streak;
+  stLearned.textContent = W().filter(w=>w.stage>=3).length;
+  stDue.textContent = W().filter(isDue).length;
+  let n=0, ok=0; for(let i=0;i<7;i++){ const x=S.days[today(Date.now()-i*DAY)]; if(x){n+=x.n; ok+=x.ok;} }
+  stAcc.textContent = n ? Math.round(100*ok/n)+'%' : '–';
+  // chart
+  const vals=[]; for(let i=29;i>=0;i--){ const x=S.days[today(Date.now()-i*DAY)]; vals.push(x?x.ms/MIN:0); }
+  const max = Math.max(S.settings.goal, ...vals);
+  chart.innerHTML = vals.map((v,i)=>`<div class="${v?'':'zero'}" style="height:${Math.max(2,100*v/max)}%" title="${Math.round(v)} min"></div>`).join('');
+  totalTime.textContent = 'total ' + fmtMin(Object.values(S.days).reduce((s,x)=>s+x.ms,0));
+  // topics
+  const tp = {}; W().forEach(w=>{ (tp[w.topic] ||= {n:0, l:0, s:0}); tp[w.topic].n++; tp[w.topic].s+=w.stage; if(w.stage>=3) tp[w.topic].l++; });
+  const row = ([k,v])=>`<div class="topic"><div><b>${esc(k)}</b><br><small class="muted">${v.l}/${v.n} learned</small></div>
+    <div class="bar"><i style="width:${100*v.s/(v.n*5)}%"></i></div><button onclick='startSession({topic:${JSON.stringify(k).replace(/'/g,"&#39;")}})'>Study</button></div>`;
+  const own = Object.entries(tp).filter(([k])=>!k.startsWith('NiG ')), nig = Object.entries(tp).filter(([k])=>k.startsWith('NiG '));
+  const nigL = nig.reduce((s,[,v])=>s+v.l,0), nigN = nig.reduce((s,[,v])=>s+v.n,0);
+  topics.innerHTML = own.map(row).join('') + (nig.length?`<details style="padding-top:10px"><summary style="cursor:pointer"><b>📘 Nederlands in gang</b> <span class="muted">${nig.length} chapters · ${nigL}/${nigN} learned</span></summary>${nig.map(row).join('')}</details>`:'');
+  // weak words
+  const wk = W().filter(w=>w.bad).sort((a,b)=>weakness(b)-weakness(a)).slice(0,8);
+  weak.innerHTML = wk.length ? wk.map(w=>`<div class="wrow"><span><b>${esc(w.nl)}</b> <span class="muted">${esc(w.en)}</span></span><span class="pill">✗ ${w.bad} · ✓ ${w.ok}</span></div>`).join('')
+    : '<span class="muted">No mistakes yet. They will show up here.</span>';
+  readiness.innerHTML = examReadiness().map(({p,best,n})=>`<div class="topic" style="grid-template-columns:1fr 110px auto"><div><b>${p.icon} ${p.name}</b><br><small class="muted">${n?Math.round(100*best)+'% best recent':'not practised yet'}</small></div>
+    <div class="bar"><i style="width:${100*best}%;background:${best>=.7?'var(--ok)':'var(--acc)'}"></i></div><button onclick="startExam('${p.key}',false)">Practise</button></div>`).join('');
+  sessions.innerHTML = S.sessions.length ? S.sessions.slice(0,6).map(s=>`<div class="wrow"><span>${new Date(s.start).toLocaleString('nl-NL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+    <span class="muted">${s.n} answers · ${s.n?Math.round(100*s.ok/s.n):0}% · ${fmtMin(s.ms)}</span></div>`).join('')
+    : '<span class="muted">No sessions yet. Press “Start learning”.</span>';
+}
+
+/* ============ WORD BROWSER ============ */
+function renderWords(){
+  const topicsList = [...new Set(W().map(w=>w.topic))];
+  if(topicF.options.length !== topicsList.length+1)
+    topicF.innerHTML = '<option value="">All topics</option>' + topicsList.map(t=>`<option>${esc(t)}</option>`).join('');
+  const q = search.value.toLowerCase(), t = topicF.value;
+  const list = W().filter(w=>(!t||w.topic===t) && (!q || w.nl.toLowerCase().includes(q) || w.en.toLowerCase().includes(q)));
+  wcount.textContent = `${list.length} words · ${list.filter(w=>w.stage>=5).length} mastered`;
+  wlist.innerHTML = list.slice(0,400).map(w=>`<div class="wrow"><span><b>${esc(w.nl)}</b> <span class="muted">${esc(w.en)}</span></span>
+    <span class="flex"><span class="dots">${[1,2,3,4,5].map(i=>`<i class="${w.stage>=i?'f':''}"></i>`).join('')}</span><button class="speak" style="width:32px;height:32px;font-size:.9rem" onclick="speak(${esc(JSON.stringify(w.nl))})">🔊</button></span></div>`).join('');
+}
+search.oninput = topicF.onchange = renderWords;
+
+/* ============ SETTINGS ============ */
+function renderSettings(){ setGoal.value=S.settings.goal; setNew.value=S.settings.newPer; setAudio.checked=S.settings.audio; }
+setGoal.onchange = ()=>{ S.settings.goal = +setGoal.value||30; save(); };
+setNew.onchange = ()=>{ S.settings.newPer = Math.max(0, +setNew.value||0); save(); };
+setAudio.onchange = ()=>{ S.settings.audio = setAudio.checked; save(); };
+function importWords(){
+  const topic = impTopic.value.trim() || 'Mijn woorden';
+  const ws = parse(imp.value); let added = 0;
+  ws.forEach(w=>{ if(addWord(w, topic)) added++; });
+  save(); imp.value=''; toast(`Added ${added} words to “${topic}”`);
+}
+function exportData(){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
+  a.download = `dutch-a2-backup-${today()}.json`; a.click();
+}
+backup.onchange = async e=>{
+  try{ const s = JSON.parse(await e.target.files[0].text()); if(!s.words) throw 0; S = s; save(); toast('Backup restored'); renderSettings(); }
+  catch(_){ toast('That file is not a valid backup'); }
+};
+function resetAll(){ if(confirm('Delete ALL progress and history?')){ localStorage.removeItem(KEY); S=null; load(); save(); toast('Reset done'); } }
+
+/* ============ UTIL / NAV ============ */
+function show(v){
+  ['home','study','summary','words','settings','exam','examrun','course'].forEach(x=>document.getElementById(x).classList.toggle('hidden', x!==v));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v || (v==='study'&&b.dataset.v==='study-start')));
+  document.querySelector('nav').classList.toggle('hidden', v==='study'||v==='examrun');
+  if(v==='home') renderHome(); if(v==='words') renderWords(); if(v==='settings') renderSettings(); if(v==='exam') renderExam(); if(v==='course') renderCourse();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=> b.dataset.v==='study-start' ? startSession() : show(b.dataset.v));
+document.addEventListener('keydown', e=>{
+  if(document.getElementById('study').classList.contains('hidden')) return;
+  if(e.key==='Escape') return endSession();
+  if(e.key==='Enter'){
+    e.preventDefault();
+    if(cur && cur.stage===0 && !answered) return introDone();
+    if(!answered && window.ans && document.activeElement===ans) return checkType();
+    if(answered) return next();
+  }
+  if(!answered && card._opts && /^[1-4]$/.test(e.key) && document.activeElement.tagName!=='INPUT') card._opts[+e.key-1]?.click();
+});
+let voice;
+function speak(t){
+  if(!S.settings.audio || !window.speechSynthesis) return;
+  voice ||= speechSynthesis.getVoices().find(v=>v.lang.replace('_','-').startsWith('nl'));
+  const u = new SpeechSynthesisUtterance(t.replace(/\.\.\./g,'')); u.lang='nl-NL'; u.rate=.9; if(voice) u.voice=voice;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+const fmtMin = ms => { const m=Math.floor(ms/MIN); return m>=60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m}:${String(Math.floor(ms/1e3)%60).padStart(2,'0')}`; };
+const praise = () => shuffle(['Goed zo! 🎉','Super! ⭐','Heel goed! 👏','Perfect! 💪','Top! 🔥'])[0];
+function toast(m){ const t=document.createElement('div'); t.className='toast'; t.textContent=m; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
+
+window.speechSynthesis && speechSynthesis.addEventListener?.('voiceschanged', ()=>voice=null);
+load(); save();
+</script>
+<script src="exam-ui.js"></script>
+<script>show('home');
+</script>
+</body>
+</html>
