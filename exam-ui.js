@@ -203,7 +203,7 @@ function bindMc(it){
 function playDialog(lines){
   if(!window.speechSynthesis) return toast('Speech is not supported in this browser');
   speechSynthesis.cancel();
-  const voices = speechSynthesis.getVoices().filter(v=>v.lang.replace('_','-').startsWith('nl'));
+  const voices = dutchVoices();
   lines.forEach(([s,t])=>{
     const u = new SpeechSynthesisUtterance(t); u.lang='nl-NL'; u.rate=.92;
     if(voices.length>1) u.voice = voices[s==='A'?0:1]; else { if(voices[0]) u.voice=voices[0]; u.pitch = s==='A'?1:1.35; }
